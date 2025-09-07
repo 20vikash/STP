@@ -5,16 +5,18 @@ import (
 	"STP/STP/models"
 )
 
+var ID = 0
+
 // Create and Add switches and interfaces
 
 func CreateInterface(sw *models.Switch, type_ string) {
-	interface_ := new(models.Interface)
 	for i := range 3 {
+		interface_ := new(models.Interface)
 		interface_.Type = type_
 		interface_.Pair = nil
 		interface_.Number = i
 
-		sw.Interface = append(sw.Interface, interface_)
+		sw.Interfaces = append(sw.Interfaces, interface_)
 	}
 }
 
@@ -30,6 +32,9 @@ func CreateSwitch() *models.Switch {
 
 	// Gig Ethernet
 	CreateInterface(sw, consts.GIGETHERNET)
+
+	sw.Id = ID
+	ID += 1 // For the next switch
 
 	return sw
 }
