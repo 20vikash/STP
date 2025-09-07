@@ -12,7 +12,8 @@ type Interface struct {
 	Number   int
 	Priority int
 	MacAddr  string
-	Pair     *Switch
+	Sw       *Switch
+	Pair     *Interface
 }
 
 var ID = 0
@@ -22,6 +23,7 @@ func CreateInterface(sw *Switch, type_ string) {
 		interface_ := new(Interface)
 		interface_.Type = type_
 		interface_.Pair = nil
+		interface_.Sw = nil
 		interface_.Number = i
 
 		sw.Interfaces = append(sw.Interfaces, interface_)
@@ -45,4 +47,6 @@ func CreateSwitch() *Switch {
 	ID += 1 // For the next switch
 
 	return sw
+
+	// Trigger STP operation here
 }
