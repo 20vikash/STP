@@ -100,6 +100,10 @@ func ConnectInterface() error {
 		fmt.Println("Port not free")
 		return errors.New("conflict")
 	}
+	if _, ok := connections[dInterface]; ok {
+		fmt.Println("Port not free")
+		return errors.New("conflict")
+	}
 
 	connections[sInterface] = dInterface
 	connections[dInterface] = sInterface
