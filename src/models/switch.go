@@ -8,9 +8,11 @@ type Switch struct {
 }
 
 type Interface struct {
-	Type   string // FastEthernet and GigEthernet consts
-	Number int
-	Pair   *Switch
+	Type     string // FastEthernet and GigEthernet consts
+	Number   int
+	Priority int
+	MacAddr  string
+	Pair     *Switch
 }
 
 var ID = 0
