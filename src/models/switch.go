@@ -2,7 +2,7 @@ package models
 
 type Switch struct {
 	Id        int
-	Interface Interface
+	Interface []*Interface
 }
 
 type Interface struct {
