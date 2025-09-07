@@ -44,6 +44,8 @@ func ConnectInterface() error {
 	var sPort string
 	var dPort string
 
+	var count int = 0
+
 	fmt.Println("The available switches: ")
 
 	for i, sw := range sws {
@@ -64,6 +66,20 @@ func ConnectInterface() error {
 	fmt.Println("Enter the destination port: ")
 	fmt.Scan(&dPort)
 
+	for _, sw := range sws {
+		if sw.Id == sSwitch {
+			count += 1
+		}
+		if sw.Id == dSwitch {
+			count += 1
+		}
+	}
+
+	if count != 2 {
+		fmt.Println("Source or destination switch dosent exist")
+		return errors.New("not found")
+	}
+
 	if sSwitch == dSwitch {
 		fmt.Println("Source and destinaion switch cannot be the same")
 		return errors.New("conflict")
@@ -81,10 +97,8 @@ func ConnectInterface() error {
 
 	// Check if the pair already exists
 	if _, ok := connections[sInterface]; ok {
-		if connections[sInterface] == dInterface || connections[dInterface] == sInterface {
-			fmt.Println("Connection already been made")
-			return errors.New("connection already exists")
-		}
+		fmt.Println("Port not free")
+		return errors.New("conflict")
 	}
 
 	connections[sInterface] = dInterface
