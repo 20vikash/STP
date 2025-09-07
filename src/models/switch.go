@@ -23,7 +23,7 @@ func CreateInterface(sw *Switch, type_ string) {
 		interface_ := new(Interface)
 		interface_.Type = type_
 		interface_.Pair = nil
-		interface_.Sw = nil
+		interface_.Sw = sw
 		interface_.Number = i
 
 		sw.Interfaces = append(sw.Interfaces, interface_)
