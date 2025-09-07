@@ -16,7 +16,7 @@ type Interface struct {
 	Pair     *Interface
 }
 
-var ID = 0
+var ID = 1
 
 func CreateInterface(sw *Switch, type_ string) {
 	for i := range 3 {
