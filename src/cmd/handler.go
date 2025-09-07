@@ -14,7 +14,7 @@ func CreateSwitch() *models.Switch {
 
 	fmt.Println("Switch successfully created with 3 fastEthernet and 3 GigEthernet")
 
-	go InitiateHelloBPDU(sw) // Each goRouting for every switches
+	go InitiateHelloBPDU(sw) // Each goRoutine for every switches
 
 	return sw
 }
@@ -132,11 +132,11 @@ func InitiateHelloBPDU(sw *models.Switch) {
 				for key, value := range connections {
 					if key.Sw == sw {
 						bpdu := models.CreateBPDU(key, value)
-						bpduChan <- bpdu
+						value.Sw.BpduChan <- bpdu
 					}
 				}
 			}
-		case bpdu := <-bpduChan: // Recieve BPDU frames from the neighbour bridge
+		case bpdu := <-sw.BpduChan: // Recieve BPDU frames from the neighbour bridge
 			timeOut.Reset(20 * time.Second)
 			for _, inter := range sw.Interfaces {
 				if bpdu.DInterface == inter {
@@ -164,7 +164,7 @@ func ForwardBPDU(inter *models.Interface, bpdu *models.BPDU) {
 	for key, value := range connections {
 		if value != bpdu.DInterface && key == inter {
 			bpdu := models.CreateBPDU(inter, value)
-			bpduChan <- bpdu
+			value.Sw.BpduChan <- bpdu
 		}
 	}
 }

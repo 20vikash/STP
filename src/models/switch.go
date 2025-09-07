@@ -1,10 +1,13 @@
 package models
 
-import "STP/STP/consts"
+import (
+	"STP/STP/consts"
+)
 
 type Switch struct {
 	Id         int
 	Interfaces []*Interface
+	BpduChan   chan *BPDU
 }
 
 type Interface struct {
@@ -30,6 +33,13 @@ func CreateInterface(sw *Switch, type_ string) {
 	}
 }
 
+func SetPriorityMac(sw *Switch) {
+	for _, inter := range sw.Interfaces {
+		inter.Priority = 327678
+		inter.MacAddr = ""
+	}
+}
+
 func CreateSwitch() *Switch {
 	// Creates a switch with fixed interfaces (3 Fast ethernets and 3 Gig Ethernets)
 	// Create the interfaces.
@@ -42,6 +52,8 @@ func CreateSwitch() *Switch {
 
 	// Gig Ethernet
 	CreateInterface(sw, consts.GIGETHERNET)
+
+	SetPriorityMac(sw)
 
 	sw.Id = ID
 	ID += 1 // For the next switch
