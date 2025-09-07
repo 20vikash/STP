@@ -1,14 +1,12 @@
 package models
 
 type Switch struct {
+	Id        int
 	Interface Interface
 }
 
 type Interface struct {
-	Fe1 FastEthernet
-	Fe2 FastEthernet
-	Fe3 FastEthernet
-	Ge1 GigEthernet
-	Ge2 GigEthernet
-	Ge3 GigEthernet
+	Type   string // FastEthernet and GigEthernet consts
+	Number int
+	Pair   *Switch
 }
