@@ -6,12 +6,15 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"time"
 )
 
 func CreateSwitch() *models.Switch {
 	sw := models.CreateSwitch()
 
 	fmt.Println("Switch successfully created with 3 fastEthernet and 3 GigEthernet")
+
+	go InitiateHelloBPDU(sw) // Each goRouting for every switches
 
 	return sw
 }
@@ -111,4 +114,57 @@ func ConnectInterface() error {
 	fmt.Println("Connection successfully made")
 
 	return nil
+}
+
+func InitiateHelloBPDU(sw *models.Switch) {
+	isRoot := true
+	bpduTimer := time.NewTicker(2 * time.Second)
+	timeOut := time.NewTimer(20 * time.Second)
+
+	defer bpduTimer.Stop()
+
+	<-bpduTimer.C
+
+	for {
+		select {
+		case <-bpduTimer.C:
+			if isRoot { // Send hello BPDU frames every 2 seconds if its the root bridge
+				for key, value := range connections {
+					if key.Sw == sw {
+						bpdu := models.CreateBPDU(key, value)
+						bpduChan <- bpdu
+					}
+				}
+			}
+		case bpdu := <-bpduChan: // Recieve BPDU frames from the neighbour bridge
+			timeOut.Reset(20 * time.Second)
+			for _, inter := range sw.Interfaces {
+				if bpdu.DInterface == inter {
+					if inter.Priority == bpdu.BridgeId {
+						if inter.MacAddr > bpdu.MacAddr {
+							isRoot = false
+							ForwardBPDU(inter, bpdu)
+						}
+						break
+					} else if inter.Priority > bpdu.BridgeId {
+						isRoot = false
+						ForwardBPDU(inter, bpdu)
+						break
+					}
+				}
+			}
+		case <-timeOut.C:
+			isRoot = true
+			fmt.Printf("The new root bridge is %d\n", sw.Id)
+		}
+	}
+}
+
+func ForwardBPDU(inter *models.Interface, bpdu *models.BPDU) {
+	for key, value := range connections {
+		if value != bpdu.DInterface && key == inter {
+			bpdu := models.CreateBPDU(inter, value)
+			bpduChan <- bpdu
+		}
+	}
 }

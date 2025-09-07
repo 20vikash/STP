@@ -8,6 +8,9 @@ import (
 var sws = make([]*models.Switch, 0)
 var connections = make(map[*models.Interface]*models.Interface)
 
+// var rootBridge = new(models.Switch)
+var bpduChan chan *models.BPDU = make(chan *models.BPDU, 10)
+
 func main() {
 	fmt.Println("STP simulator")
 	fmt.Println("1. Create switch\n 2. Connect interface\n -1. Quit")
