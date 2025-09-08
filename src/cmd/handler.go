@@ -13,6 +13,7 @@ func CreateSwitch() *models.Switch {
 	sw := models.CreateSwitch()
 
 	fmt.Println("Switch successfully created with 3 fastEthernet and 3 GigEthernet")
+	fmt.Printf("Mac address is: %s", sw.MacAddr)
 
 	go InitiateHelloBPDU(sw) // Each goRoutine for every switches
 
@@ -113,42 +114,45 @@ func ConnectInterface() error {
 
 	fmt.Println("Connection successfully made")
 
+	// Reset all timers
+	for _, sw := range sws {
+		sw.TimerResetChan <- true
+	}
+
 	return nil
 }
 
 func InitiateHelloBPDU(sw *models.Switch) {
 	isRoot := true
 	bpduTimer := time.NewTicker(2 * time.Second)
-	timeOut := time.NewTimer(20 * time.Second)
-
-	defer bpduTimer.Stop()
-
-	<-bpduTimer.C
+	timeOut := time.NewTimer(6 * time.Second)
 
 	for {
 		select {
+		case <-sw.TimerResetChan:
+			timeOut.Reset(6 * time.Second)
 		case <-bpduTimer.C:
 			if isRoot { // Send hello BPDU frames every 2 seconds if its the root bridge
 				for key, value := range connections {
 					if key.Sw == sw {
-						bpdu := models.CreateBPDU(key, value)
+						bpdu := models.CreateBPDU(key, value, key.Sw.MacAddr)
 						value.Sw.BpduChan <- bpdu
 					}
 				}
 			}
 		case bpdu := <-sw.BpduChan: // Recieve BPDU frames from the neighbour bridge
-			timeOut.Reset(20 * time.Second)
+			timeOut.Reset(6 * time.Second)
 			for _, inter := range sw.Interfaces {
 				if bpdu.DInterface == inter {
 					if inter.Priority == bpdu.BridgeId {
-						if inter.MacAddr > bpdu.MacAddr {
+						if sw.MacAddr > bpdu.MacAddr {
 							isRoot = false
-							ForwardBPDU(inter, bpdu)
+							ForwardBPDU(inter, bpdu, bpdu.MacAddr)
 						}
 						break
 					} else if inter.Priority > bpdu.BridgeId {
 						isRoot = false
-						ForwardBPDU(inter, bpdu)
+						ForwardBPDU(inter, bpdu, bpdu.MacAddr)
 						break
 					}
 				}
@@ -160,10 +164,10 @@ func InitiateHelloBPDU(sw *models.Switch) {
 	}
 }
 
-func ForwardBPDU(inter *models.Interface, bpdu *models.BPDU) {
+func ForwardBPDU(inter *models.Interface, bpdu *models.BPDU, mac string) {
 	for key, value := range connections {
-		if value != bpdu.DInterface && key == inter {
-			bpdu := models.CreateBPDU(inter, value)
+		if value != bpdu.SInterface && key.Sw == inter.Sw {
+			bpdu := models.CreateBPDU(inter, value, mac)
 			value.Sw.BpduChan <- bpdu
 		}
 	}
